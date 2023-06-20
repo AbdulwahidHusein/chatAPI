@@ -41,5 +41,14 @@ class CustomUser(AbstractUser):
     def __str__(self):
         return self.email
     
-
+class Message(models.Model):
+    sender = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='sender')
+    reciever = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    recieved = models.BooleanField(default=False)
+    sent_date = models.DateTimeField(auto_now_add=True)
+    recieved_date = models.DateTimeField(auto_now_add=False)
+    file = models.FileField(upload_to='files', null=True , blank=True)
+    image = models.ImageField(upload_to='files/image', null=True, blank=True)
+    text = models.TextField()
+        
     
