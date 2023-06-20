@@ -1,1 +1,4 @@
+/files
 /virtual
+db.sqlite3
+.gitignore
