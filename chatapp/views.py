@@ -1,15 +1,12 @@
-from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import Message, CustomUser
-from django.contrib.auth import authenticate
 from .serializers import MessageSerializer, LoginSerializer, CustomUserSerializer
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.authtoken.models import Token
 from rest_framework import status
-from rest_framework.authentication import TokenAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.views import TokenObtainPairView
+
 from rest_framework_simplejwt.tokens import RefreshToken
 
 
@@ -24,8 +21,8 @@ def authenticate_user(email, password):
         raise AuthenticationFailed("invalid credentials2")
     
 
-class home(TokenObtainPairView,APIView):
-    authentication_classes = [TokenAuthentication]
+class MessagesView(TokenObtainPairView,APIView):
+    #authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
     def get(self, request):
         message = Message.objects.filter()
@@ -68,4 +65,8 @@ class LogoutView(APIView):
             return Response(status=status.HTTP_204_NO_CONTENT)
         except:
             return Response(status=status.HTTP_204_NO_CONTENT)
+        
+class GetMessage(APIView):
+    authentication_classes = []
+    
         
