@@ -19,11 +19,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from django.contrib import admin
 from django.urls import path, include
-from chatapp.views import LoginView, LogoutView
 
 urlpatterns = [
-    path('auth/logout',LogoutView.as_view(), name="logout"),
-    path('auth/login', LoginView.as_view(), name="login"),
     path('api/', include('chatapp.urls')),
     path('admin/', admin.site.urls),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),

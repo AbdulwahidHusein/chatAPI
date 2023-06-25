@@ -50,7 +50,7 @@ class Message(models.Model):
     reciever = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     recieved = models.BooleanField(default=False)
     sent_date = models.DateTimeField(auto_now_add=True)
-    recieved_date = models.DateTimeField(auto_now_add=False)
+    recieved_date = models.DateTimeField(default=None, null=True, blank=True)
     file = models.FileField(upload_to='files', null=True , blank=True)
     image = models.ImageField(upload_to='files/images/message_pictures', null=True, blank=True)
     text = models.TextField()

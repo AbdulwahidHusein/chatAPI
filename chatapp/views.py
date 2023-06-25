@@ -1,12 +1,13 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import Message, CustomUser
-from .serializers import MessageSerializer, LoginSerializer, CustomUserSerializer
+from .serializers import MessageSerializer, RecievedMessageSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from django.shortcuts import get_object_or_404
 
 
 def authenticate_user(email, password):
@@ -19,92 +20,74 @@ def authenticate_user(email, password):
     except:
         raise AuthenticationFailed("invalid credentials2")
     
-class MessageView(TokenObtainPairView, APIView):
-    authentication_classes = [TokenObtainPairView]
+
+class MessageView( TokenObtainPairView,APIView):
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
+
     def get(self, request, **kwargs):
-        id = self.kwargs.get(id)
-        message  = Message.objects.filter(id=id)
-        serialized_data = MessageSerializer(message).data
+        id = self.kwargs.get('id')
+        message = Message.objects.filter(id=id)
+        serialized_data = MessageSerializer(message, many=True).data
         return Response(serialized_data)
 
 
 class MessagesView(TokenObtainPairView, APIView):
-    authentication_classes = [TokenObtainPairView]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
+
     def get(self, request):
-        messages = Message.objects.filter()
+        messages = Message.objects.all()
         serialized_data = MessageSerializer(messages, many=True).data
         return Response(serialized_data)
 
+
 class HandleSentMessage(TokenObtainPairView, APIView):
-    authentication_classes = [TokenObtainPairView]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
+
     def post(self, request):
-        data = request.POST
-        serialized_data = MessageSerializer(data)
+        data = request.data.copy()
+        sender = request.user
+        reciever_id = int(data['reciever_id'])  # Update to 'reciever_id'
+        reciever = CustomUser.objects.get
+        data['sender'] = sender.id
+        data['reciever'] = reciever_id
+        reciever = get_object_or_404(CustomUser, id=reciever_id)
+        serialized_data = RecievedMessageSerializer(data=data)
         if serialized_data.is_valid():
             serialized_data.save()
-            return Response(status.HTTP_202_ACCEPTED)
+            return Response(status=status.HTTP_202_ACCEPTED,data=f"message succesfully sent to {reciever.first_name}!")
         else:
-            return Response(status.HTTP_406_NOT_ACCEPTABLE)
-        
+            return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
+                   
 class MesssagesFromUser(TokenObtainPairView, APIView):
-    authentication_classes = [TokenObtainPairView]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     def get(self, request):
         user = request.user
         messages = Message.objects.filter(sender=user)
-        serialized_data = MessageSerializer(messages, many=True)
+        serialized_data = MessageSerializer(messages, many=True).data
         return Response(serialized_data)
 
 class MessagesToUser(TokenObtainPairView, APIView):
-    authentication_classes = [TokenObtainPairView]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     def get(self, request):
         user = request.user
         messages = Message.objects.filter(reciever=user)
-        serialized_data = MessageSerializer(messages, many=True)
+        serialized_data = MessageSerializer(messages, many=True).data
         return Response(serialized_data)
-
-class LoginView(APIView):
-     def post(self, request):
-        serializer = LoginSerializer(data=request.data)
-        if serializer.is_valid():
-            email = serializer.validated_data['email']
-            password = serializer.validated_data['password']
-            first_name = serializer.validated_data.get('first_name')
-            last_name = serializer.validated_data.get('second_name')
-
-            # Perform authentication and generate token
-            # Example code using Django's built-in authentication
-            user = authenticate_user(email, password)
-            if user is not None:
-                refresh = RefreshToken.for_user(user)
-
-                response = Response({
-                    'refresh': str(refresh),
-                    'access': str(refresh.access_token)
-                    })
-                response.set_cookie('jwt', refresh.access_token, httponly=True)
-                response.data = {
-                    'user': CustomUserSerializer(user).data
-                                }
-                return response
-            else:
-                return Response({'error': 'Invalid credentials3'}, status=status.HTTP_401_UNAUTHORIZED)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-class LogoutView(APIView):
-    def get(self, request):
-        # Delete the token associated with the user
-        try:
-            request.user.auth_token.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except:
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        
-class GetMessage(APIView):
-    authentication_classes = []
     
-        
+class ReciveMessageView(TokenObtainPairView, APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    def get(self, request, **kwargs):
+        id = self.kwargs.get('id')
+        message = get_object_or_404(Message, id=id)
+        if message.reciever == request.user:
+            message.recieved = True
+            message.save()
+            return Response(status=status.HTTP_200_OK)
+        else:
+            return Response(status=status.HTTP_304_NOT_MODIFIED)

@@ -18,9 +18,13 @@ class MessageSerializer(serializers.ModelSerializer):
         model = Message
         fields = '__all__'
         
-class LoginSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    password = serializers.CharField()
-    first_name = serializers.CharField(required=False)
-    last_name = serializers.CharField(required=False)
-    
+class RecievedMessageSerializer(serializers.ModelSerializer):
+    image = ImageField(required=False)
+    file = FileField(required=False)
+    text = CharField( required=True)
+    class Meta:
+        model = Message
+        fields = [
+            'text', 'image', 'file', 'sender', 'reciever'
+            
+        ]
