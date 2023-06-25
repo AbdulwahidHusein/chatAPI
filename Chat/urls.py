@@ -24,7 +24,7 @@ from chatapp.views import LoginView, LogoutView
 urlpatterns = [
     path('auth/logout',LogoutView.as_view(), name="logout"),
     path('auth/login', LoginView.as_view(), name="login"),
-    path('messages/', include('chatapp.urls')),
+    path('api/', include('chatapp.urls')),
     path('admin/', admin.site.urls),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),

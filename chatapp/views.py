@@ -6,7 +6,6 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.views import TokenObtainPairView
-
 from rest_framework_simplejwt.tokens import RefreshToken
 
 
@@ -20,14 +19,53 @@ def authenticate_user(email, password):
     except:
         raise AuthenticationFailed("invalid credentials2")
     
+class MessageView(TokenObtainPairView, APIView):
+    authentication_classes = [TokenObtainPairView]
+    permission_classes = [IsAuthenticated]
+    def get(self, request, **kwargs):
+        id = self.kwargs.get(id)
+        message  = Message.objects.filter(id=id)
+        serialized_data = MessageSerializer(message).data
+        return Response(serialized_data)
 
-class MessagesView(TokenObtainPairView,APIView):
-    #authentication_classes = [TokenAuthentication]
+
+class MessagesView(TokenObtainPairView, APIView):
+    authentication_classes = [TokenObtainPairView]
     permission_classes = [IsAuthenticated]
     def get(self, request):
-        message = Message.objects.filter()
-        serialized = MessageSerializer(message, many=True).data
-        return Response(serialized)
+        messages = Message.objects.filter()
+        serialized_data = MessageSerializer(messages, many=True).data
+        return Response(serialized_data)
+
+class HandleSentMessage(TokenObtainPairView, APIView):
+    authentication_classes = [TokenObtainPairView]
+    permission_classes = [IsAuthenticated]
+    def post(self, request):
+        data = request.POST
+        serialized_data = MessageSerializer(data)
+        if serialized_data.is_valid():
+            serialized_data.save()
+            return Response(status.HTTP_202_ACCEPTED)
+        else:
+            return Response(status.HTTP_406_NOT_ACCEPTABLE)
+        
+class MesssagesFromUser(TokenObtainPairView, APIView):
+    authentication_classes = [TokenObtainPairView]
+    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        user = request.user
+        messages = Message.objects.filter(sender=user)
+        serialized_data = MessageSerializer(messages, many=True)
+        return Response(serialized_data)
+
+class MessagesToUser(TokenObtainPairView, APIView):
+    authentication_classes = [TokenObtainPairView]
+    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        user = request.user
+        messages = Message.objects.filter(reciever=user)
+        serialized_data = MessageSerializer(messages, many=True)
+        return Response(serialized_data)
 
 class LoginView(APIView):
      def post(self, request):
