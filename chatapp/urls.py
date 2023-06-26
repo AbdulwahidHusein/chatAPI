@@ -10,4 +10,5 @@ urlpatterns = [
     path('edit/<int:id>', UpdateMessageView.as_view(), name='edit'),
     path('delete/<int:id>/', DeleteMessageView.as_view(), name='delete'),
     path('register', UserCreationView.as_view(), name='register'),
+    path('login', UserLoginView.as_view(), name='login'),
 ]

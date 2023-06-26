@@ -8,7 +8,7 @@ from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.shortcuts import get_object_or_404
-
+from rest_framework_simplejwt.tokens import RefreshToken
 
 def authenticate_user(email, password):
     try:
@@ -131,17 +131,47 @@ class DeleteMessageView(TokenObtainPairView, APIView):
         message.delete()
         return Response(status=status.HTTP_200_OK, data="message succesfully deleted")
     
+from rest_framework_simplejwt.tokens import RefreshToken
+
 class UserCreationView(APIView):
     def post(self, request):
         data = request.data.copy()
         email = data.get('email')
+
         try:
-            if CustomUser.objects.get(email=email):
-                return Response(data="the user with this email is already registered")
-        except:
-            serializer = UserCreationSerializer(data = data)
+            user = CustomUser.objects.get(email=email)
+            return Response(data='The user with this email is already registered.', status=status.HTTP_400_BAD_REQUEST)
+        except CustomUser.DoesNotExist:
+            serializer = UserCreationSerializer(data=data)
             if serializer.is_valid():
-                serializer.save()
-                return Response(status=status.HTTP_201_CREATED, data='you have succesfully registered')
+                user = serializer.save()
+                
+                refresh = RefreshToken.for_user(user)
+
+                # Generate token and send it to the user
+                token = {
+                    'refresh': str(refresh),
+                    'access': str(refresh.access_token),
+                }
+                return Response(data=token, status=status.HTTP_201_CREATED)
             else:
                 return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserLoginView(APIView):
+    def post(self, request):
+        data = request.data.copy()
+        email = data.get('email')
+        password = data.get('password')
+        user = get_object_or_404(CustomUser, email=email, password=password)
+        if user:
+            refresh = RefreshToken.for_user(user)
+
+            # Generate token and send it to the user
+            token = {
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+            }
+            return Response(token, status=status.HTTP_200_OK)
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
