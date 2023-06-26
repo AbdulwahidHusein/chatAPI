@@ -1,15 +1,17 @@
 from rest_framework import serializers
-from rest_framework.fields import EmailField, CharField, FileField, ImageField
+from rest_framework.fields import EmailField, CharField, FileField, ImageField, IntegerField
 from .models import Message
 from .models import CustomUser
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
-    name = CharField(source='first_name',required=True)
-    email= EmailField(required=True)
+    first_name = CharField(required=True)
+    #email= EmailField(required=True)
     class Meta:
         model = CustomUser
-        exclude = ['password',]
+        fields = [
+            'first_name', 'second_name', 'age', 'country', 'profile_picture'
+        ]
 class MessageSerializer(serializers.ModelSerializer):
     sender = CustomUserSerializer()
     reciever = CustomUserSerializer()
@@ -27,4 +29,18 @@ class RecievedMessageSerializer(serializers.ModelSerializer):
         fields = [
             'text', 'image', 'file', 'sender', 'reciever'
             
+        ]
+
+class UserCreationSerializer(serializers.ModelSerializer):
+    email = EmailField(required=True)
+    password = CharField(required=True)
+    first_name = CharField(required=True)
+    second_name = CharField(required=False)
+    age = IntegerField(required=False)
+    country = CharField(required=False)
+    profile_picture = FileField(required=False)
+    class Meta:
+        model = CustomUser
+        fields = [
+            'email','password', 'first_name', 'second_name', 'age', 'country', 'profile_picture'
         ]
